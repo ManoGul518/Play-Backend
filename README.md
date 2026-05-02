@@ -1,0 +1,2 @@
+# Chai-Backend
+A backend learning project by Chai aur Code to deeply learn backend development. This project is designed to provide hands-on experience with various backend technologies, frameworks, and real-world practices.
