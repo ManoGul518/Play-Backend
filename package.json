@@ -14,9 +14,10 @@
     "chai",
     "code"
   ],
-  "author": "ManoGul518",
+  "author": "Mano_Gul",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "prettier": "^3.8.3"
   }
 }
