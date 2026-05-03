@@ -2,7 +2,8 @@
 /node_modules
 ./dist
 
+README.md
+
 *.env
 .env
 .env.*
- 
