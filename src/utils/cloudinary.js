@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import { ApiError } from "./ApiError.js";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -22,5 +23,17 @@ export const uploadOnCloudinary = async (localFilePath) => {
         // Remove the locally saved temporary file as upload is unsuccessful
         fs.unlinkSync(localFilePath);
         return null;
+    }
+};
+
+export const removeFromCloudinary = async (publicId) => {
+    try {
+        console.log("public_id", publicId)
+        await cloudinary.uploader.destroy(publicId, { invalidate: true });
+    } catch (error) {
+        throw new ApiError(
+            500,
+            error.message || "Error while removing file from cloudinary"
+        );
     }
 };

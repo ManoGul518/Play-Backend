@@ -2,7 +2,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+    uploadOnCloudinary,
+    removeFromCloudinary,
+} from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -54,7 +57,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with email or username already exists");
     }
 
-    const avatarLocalPath = req.files?.avatar[0].path;
+    const avatarLocalPath = req.files?.avatar?.[0].path;
 
     let coverImageLocalPath;
     if (
@@ -79,8 +82,14 @@ const registerUser = asyncHandler(async (req, res) => {
     const user = await User.create({
         fullName,
         username: username.toLowerCase(),
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
+        avatar: {
+            url: avatar.url,
+            public_id: avatar.public_id,
+        },
+        coverImage: {
+            url: coverImage?.url,
+            public_id: coverImage?.public_id,
+        },
         email,
         password,
     });
@@ -292,6 +301,8 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
+    const oldAvatarPublicId = req.user?.avatar?.public_id;
+    console.log(req.file)
     const avatarLocalPath = req.file?.path;
 
     if (!avatarLocalPath) {
@@ -300,7 +311,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
 
-    if (!avatar.url) {
+    if (!avatar) {
         throw new ApiError(500, "Error while uploading avatar");
     }
 
@@ -308,17 +319,22 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         req.user?._id,
         {
             $set: {
-                avatar: avatar.url,
+                avatar: {
+                    url: avatar.url,
+                    public_id: avatar.public_id,
+                },
             },
         },
         { new: true }
     ).select("-password");
 
+    if (oldAvatarPublicId) {
+        await removeFromCloudinary(oldAvatarPublicId);
+    }
+
     return res
         .status(200)
-        .json(
-            new ApiResponse(200, user, "Avatar updated successfully")
-        );
+        .json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
@@ -338,7 +354,10 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         req.user?._id,
         {
             $set: {
-                coverImage: coverImage.url,
+                coverImage: {
+                    url: coverImage.url,
+                    public_id: coverImage.public_id,
+                },
             },
         },
         { new: true }
@@ -346,9 +365,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(200, user, "Cover Image updated successfully")
-        );
+        .json(new ApiResponse(200, user, "Cover Image updated successfully"));
 });
 
 export {
@@ -360,5 +377,5 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
 };
