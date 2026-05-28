@@ -40,11 +40,11 @@ router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 
 router
-    .route("/update-avatar")
+    .route("/avatar")
     .patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 
 router
-    .route("/update-coverimage")
+    .route("/cover-image")
     .patch(verifyJWT, upload.single("coverImage"), updateUserAvatar);
 
 router.route("/change-password").post(verifyJWT, changeCurrentPassword);
