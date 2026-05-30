@@ -53,7 +53,7 @@ router.route("/current-user").post(verifyJWT, getCurrentUser);
 
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 
-router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
+router.route("/c/:username").get(getUserChannelProfile);
 
 router.route("/history").get(verifyJWT, getUserWatchHistory);
 
