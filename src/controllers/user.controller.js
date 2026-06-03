@@ -280,7 +280,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     const { fullName, email } = req.body;
 
     if (!(fullName || email)) {
-        throw new ApiError(404, "All fields are required");
+        throw new ApiError(400, "All fields are required");
     }
 
     const user = await User.findByIdAndUpdate(
@@ -306,7 +306,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     const avatarLocalPath = req.file?.path;
 
     if (!avatarLocalPath) {
-        throw new ApiError(404, "Avatar file is missing");
+        throw new ApiError(400, "Avatar file is missing");
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
@@ -341,7 +341,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     const coverImageLocalPath = req.file?.path;
 
     if (!coverImageLocalPath) {
-        throw new ApiError(404, "Cover Image file is missing");
+        throw new ApiError(400, "Cover Image file is missing");
     }
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
@@ -372,7 +372,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     const { username } = req.params;
 
     if (!username?.trim()) {
-        throw new ApiError(404, "Username not found");
+        throw new ApiError(400, "Username not found");
     }
 
     const channel = await User.aggregate([
@@ -429,7 +429,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     ]);
 
     if (!channel?.length) {
-        throw new ApiError(404, "Channel not found");
+        throw new ApiError(400, "Channel not found");
     }
 
     return res
