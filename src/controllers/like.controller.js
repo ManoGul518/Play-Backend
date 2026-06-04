@@ -1,17 +1,15 @@
-import mongoose, { isValidObjectId } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { User } from "../models/user.model.js";
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
 
     if (!videoId) {
-        throw new ApiError(404, "Video not found");
-    }
-    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Video Id required");
+    } else if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid Video Id");
     }
 
@@ -36,9 +34,8 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 const toggleCommentLike = asyncHandler(async (req, res) => {
     const { commentId } = req.params;
     if (!commentId) {
-        throw new ApiError(404, "Comment not found");
-    }
-    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, "Comment Id required");
+    } else if (!isValidObjectId(commentId)) {
         throw new ApiError(400, "Invalid Comment Id");
     }
 
@@ -63,9 +60,8 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const { tweetId } = req.params;
     if (!tweetId) {
-        throw new ApiError(404, "Tweet not found");
-    }
-    if (!isValidObjectId(tweetId)) {
+        throw new ApiError(400, "Tweet Id required");
+    } else if (!isValidObjectId(tweetId)) {
         throw new ApiError(400, "Invalid Tweet Id");
     }
 
