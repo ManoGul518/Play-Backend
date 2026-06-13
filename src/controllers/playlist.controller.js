@@ -87,7 +87,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
         {
             $addToSet: { videos: videoId },
         },
-        { new: true }
+        { returnDocument: "after" }
     ).populate("videos");
 
     return res
@@ -123,7 +123,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         {
             $pull: { videos: videoId },
         },
-        { new: true }
+        { returnDocument: "after" }
     ).populate("videos");
 
     return res
@@ -178,7 +178,7 @@ const updatePlaylist = asyncHandler(async (req, res) => {
             name,
             description,
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     return res

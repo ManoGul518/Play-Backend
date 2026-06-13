@@ -64,9 +64,7 @@ const updateComment = asyncHandler(async (req, res) => {
     const { content } = req.body;
     const trimmedContent = content?.trim();
 
-    if (!commentId) {
-        throw new ApiError(400, "Comment Id is required");
-    } else if (!isValidObjectId(commentId)) {
+    if (!isValidObjectId(commentId)) {
         throw new ApiError(400, "Invalid comment Id");
     } else if (!(content && trimmedContent)) {
         throw new ApiError(400, "Content is required");
@@ -85,7 +83,7 @@ const updateComment = asyncHandler(async (req, res) => {
         {
             content: trimmedContent,
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     return res

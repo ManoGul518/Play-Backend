@@ -58,6 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with email or username already exists");
     }
 
+    console.log(req.files)
     const avatarLocalPath = req.files?.avatar?.[0].path;
 
     let coverImageLocalPath;
@@ -100,6 +101,8 @@ const registerUser = asyncHandler(async (req, res) => {
     );
 
     if (!createdUser) {
+        await removeFromCloudinary(avatar.public_id);
+        await removeFromCloudinary(coverImage.public_id);
         throw new ApiError(
             500,
             "Something went wrong while registering the user"
@@ -153,12 +156,12 @@ const loginUser = asyncHandler(async (req, res) => {
         secure: true,
     };
 
-    res.status(201)
+    res.status(200)
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(
-                201,
+                200,
                 {
                     user: loggedInUser,
                     accessToken,
@@ -179,7 +182,7 @@ const logoutUser = asyncHandler(async (req, res) => {
                 },
             },
             {
-                new: true,
+                returnDocument: "after",
             }
         );
 
@@ -278,6 +281,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
     const { fullName, email } = req.body;
+    console.log(req.body);
 
     if (!(fullName || email)) {
         throw new ApiError(400, "All fields are required");
@@ -291,7 +295,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
                 email,
             },
         },
-        { new: true }
+        { returnDocument: "after" }
     ).select("-password");
 
     return res
@@ -325,7 +329,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
                 },
             },
         },
-        { new: true }
+        { returnDocument: "after" }
     ).select("-password");
 
     if (oldAvatarPublicId) {
@@ -360,7 +364,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
                 },
             },
         },
-        { new: true }
+        { returnDocument: "after" }
     ).select("-password");
 
     return res
@@ -464,25 +468,33 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
                                     $project: {
                                         fullName: 1,
                                         username: 1,
-                                        avatar: 1
-                                    }
-                                }
-                            ]
+                                        avatar: 1,
+                                    },
+                                },
+                            ],
                         },
                     },
                     {
-                        $addField: {
+                        $addFields: {
                             owner: {
-                                $first: "$owner"
-                            }
-                        }
-                    }
+                                $first: "$owner",
+                            },
+                        },
+                    },
                 ],
             },
         },
     ]);
 
-    return res.status(200).json(new ApiResponse(200, user[0].watchHistory, "Watch History fetched successfully"))
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user[0].watchHistory,
+                "Watch History fetched successfully"
+            )
+        );
 });
 
 export {

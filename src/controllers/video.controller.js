@@ -3,7 +3,10 @@ import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+    uploadOnCloudinary,
+    removeFromCloudinary,
+} from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -97,13 +100,25 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const videoDuration = videoFile.duration || 0;
 
     const newVideo = await Video.create({
-        videoFile: videoFile.secure_url,
-        thumbnail: thumbnail.secure_url,
+        videoFile: {
+            url: videoFile.secure_url,
+            public_id: videoFile.public_id,
+        },
+        thumbnail: {
+            url: thumbnail.url,
+            public_id: thumbnail.public_id,
+        },
         title,
         description,
         owner: req.user._id,
         duration: videoDuration,
     });
+
+    if (!newVideo) {
+        await removeFromCloudinary(videoFile.public_id);
+        await removeFromCloudinary(thumbnail.public_id);
+        throw new ApiError(500, "Error publishing video");
+    }
 
     return res
         .status(201)
@@ -122,7 +137,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         {
             $inc: { views: 1 },
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     return res
@@ -157,7 +172,8 @@ const updateVideo = asyncHandler(async (req, res) => {
             throw new ApiError(500, "Failed to upload thumbnail");
         }
 
-        updateData.thumbnail = thumbnail.secure_url;
+        updateData.thumbnail.url = thumbnail.url;
+        updateData.thumbnail.public_id = thumbnail.public_id;
     }
     if (title) {
         updateData.title = title;
@@ -165,7 +181,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (description) {
         updateData.description = description;
     }
-    
+
     if (Object.keys(updateData).length === 0) {
         throw new ApiError(
             400,
@@ -174,7 +190,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     }
 
     const updatedVideo = await Video.findByIdAndUpdate(videoId, updateData, {
-        new: true,
+        returnDocument: "after",
     });
 
     return res
@@ -198,6 +214,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
         throw new ApiError(403, "Not authorized to delete this video");
     }
 
+    await removeFromCloudinary(video.videoFile.public_id);
+    await removeFromCloudinary(video.thumbnail.public_id);
     await Video.findByIdAndDelete(videoId);
 
     return res
