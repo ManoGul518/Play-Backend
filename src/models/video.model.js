@@ -30,10 +30,13 @@ const videoSchema = new Schema(
         isPublished: {
             type: Boolean,
             default: true,
+            index: true,
         },
         owner: {
             type: Schema.Types.ObjectId,
             ref: "User",
+            required: true,
+            index: true,
         },
     },
     {

@@ -18,19 +18,29 @@ const userSchema = new Schema(
             unique: true,
             lowercase: true,
             trim: true,
+            index: true,
         },
         fullName: {
             type: String,
             required: true,
             trim: true,
-            index: true,
         },
         avatar: {
-            type: Object,
+            type: {
+                url: {
+                    type: String,
+                    required: true,
+                },
+                public_id: {
+                    type: String,
+                    required: true,
+                },
+            },
             required: true,
-        },
         coverImage: {
-            type: Object,
+            url: String,
+            public_id: String,
+        },
         },
         watchHistory: [
             {

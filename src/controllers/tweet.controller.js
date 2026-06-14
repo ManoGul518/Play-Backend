@@ -63,7 +63,7 @@ const updateTweet = asyncHandler(async (req, res) => {
         {
             content: trimmedContent,
         },
-        { new: true }
+        { returnDocument: "after" }
     );
 
     return res

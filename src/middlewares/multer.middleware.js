@@ -12,4 +12,22 @@ const storage = multer.diskStorage({
 
 export const upload = multer({
     storage,
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB max per file
+    },
+    fileFilter: (req, file, cb) => {
+        // Only allow video and image files
+        const allowedMimes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "video/mp4",
+            "video/webm",
+        ];
+        if (allowedMimes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error("Invalid file type"));
+        }
+    },
 });

@@ -45,11 +45,11 @@ router
 
 router
     .route("/cover-image")
-    .patch(verifyJWT, upload.single("coverImage"), updateUserAvatar);
+    .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
 
 router.route("/change-password").post(verifyJWT, changeCurrentPassword);
 
-router.route("/current-user").post(verifyJWT, getCurrentUser);
+router.route("/current-user").get(verifyJWT, getCurrentUser);
 
 router.route("/update-account").patch(verifyJWT, updateAccountDetails);
 

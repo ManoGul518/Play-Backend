@@ -10,8 +10,15 @@ import {
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-    const pageNumber = parseInt(page);
-    const limitNumber = parseInt(limit);
+    const pageNumber = parseInt(page) || 1;
+    const limitNumber = parseInt(limit) || 10;
+
+    if (pageNumber < 1 || limitNumber < 1) {
+        throw new ApiError(400, "Page and limit must be positive integers");
+    }
+    if (limitNumber > 100) {
+        throw new ApiError(400, "Limit cannot exceed 100");
+    }
 
     if (userId && !isValidObjectId(userId)) {
         throw new ApiError(400, "Invalid user Id");
@@ -19,19 +26,20 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
     const pipeline = [];
 
+    const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (query) {
         pipeline.push({
             $match: {
                 $or: [
                     {
                         title: {
-                            $regex: query,
+                            $regex: escapeRegex(query),
                             $options: "i",
                         },
                     },
                     {
                         description: {
-                            $regex: query,
+                            $regex: escapeRegex(query),
                             $options: "i",
                         },
                     },
@@ -105,7 +113,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
             public_id: videoFile.public_id,
         },
         thumbnail: {
-            url: thumbnail.url,
+            url: thumbnail.secure_url,
             public_id: thumbnail.public_id,
         },
         title,
@@ -172,8 +180,10 @@ const updateVideo = asyncHandler(async (req, res) => {
             throw new ApiError(500, "Failed to upload thumbnail");
         }
 
-        updateData.thumbnail.url = thumbnail.url;
-        updateData.thumbnail.public_id = thumbnail.public_id;
+        updateData.thumbnail = {
+            url: thumbnail.secure_url,
+            public_id: thumbnail.public_id,
+        };
     }
     if (title) {
         updateData.title = title;
@@ -214,13 +224,26 @@ const deleteVideo = asyncHandler(async (req, res) => {
         throw new ApiError(403, "Not authorized to delete this video");
     }
 
-    await removeFromCloudinary(video.videoFile.public_id);
-    await removeFromCloudinary(video.thumbnail.public_id);
+    // Delete all associated likes and comments before deleting video
+    await Promise.all([
+        Like.deleteMany({ video: videoId }),
+        Comment.deleteMany({ video: videoId }),
+        Playlist.updateMany(
+            { videos: videoId },
+            { $pull: { videos: videoId } }
+        ),
+    ]);
+    // Remove video and thumbnail from Cloudinary
+    await Promise.all([
+        removeFromCloudinary(video.videoFile.public_id),
+        removeFromCloudinary(video.thumbnail.public_id),
+    ]);
+    // Finally, delete the video document
     await Video.findByIdAndDelete(videoId);
-
+    
     return res
         .status(200)
-        .json(new ApiResponse(200, null, "Video deleted successfully"));
+        .json(new ApiResponse(200, {}, "Video deleted successfully"));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {

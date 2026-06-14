@@ -75,7 +75,7 @@ const updateComment = asyncHandler(async (req, res) => {
     if (!comment) {
         throw new ApiError(404, "Comment not found");
     } else if (!comment.owner.equals(req.user._id)) {
-        throw new ApiError(400, "Not authorized to update this comment");
+        throw new ApiError(403, "Not authorized to update this comment");
     }
 
     const updatedComment = await Comment.findByIdAndUpdate(
@@ -114,7 +114,7 @@ const deleteComment = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new ApiResponse(200, null, "Comment deleted successfully"));
+        .json(new ApiResponse(200, {}, "Comment deleted successfully"));
 });
 
 export { getVideoComments, addComment, updateComment, deleteComment };

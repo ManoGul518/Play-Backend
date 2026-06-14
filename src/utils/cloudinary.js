@@ -15,20 +15,20 @@ export const uploadOnCloudinary = async (localFilePath) => {
             resource_type: "auto",
         });
 
-        fs.unlinkSync(localFilePath, {
-            resource_type: "auto",
-        });
+        fs.unlinkSync(localFilePath);
         return response;
     } catch (error) {
         // Remove the locally saved temporary file as upload is unsuccessful
         fs.unlinkSync(localFilePath);
-        return null;
+        throw new ApiError(
+            500,
+            error.message || "Error while uploading file to cloudinary"
+        );
     }
 };
 
 export const removeFromCloudinary = async (publicId) => {
     try {
-        console.log("public_id", publicId)
         await cloudinary.uploader.destroy(publicId, { invalidate: true });
     } catch (error) {
         throw new ApiError(

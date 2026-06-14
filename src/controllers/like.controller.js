@@ -22,12 +22,12 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         await Like.findByIdAndDelete(existingLike._id);
         return res
             .status(200)
-            .json(new ApiResponse(200, "Video unliked successfully"));
+            .json(new ApiResponse(200, {}, "Video unliked successfully"));
     } else {
         await Like.create({ video: videoId, likedBy: req.user._id });
         return res
             .status(200)
-            .json(new ApiResponse(200, "Video liked successfully"));
+            .json(new ApiResponse(200, {}, "Video liked successfully"));
     }
 });
 
@@ -48,12 +48,12 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         await Like.findByIdAndDelete(existingLike._id);
         return res
             .status(200)
-            .json(new ApiResponse(200, "Comment unliked successfully"));
+            .json(new ApiResponse(200, {}, "Comment unliked successfully"));
     } else {
         await Like.create({ comment: commentId, likedBy: req.user._id });
         return res
             .status(200)
-            .json(new ApiResponse(200, "Comment liked successfully"));
+            .json(new ApiResponse(200, {}, "Comment liked successfully"));
     }
 });
 
@@ -74,12 +74,12 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         await Like.findByIdAndDelete(existingLike._id);
         return res
             .status(200)
-            .json(new ApiResponse(200, "Tweet unliked successfully"));
+            .json(new ApiResponse(200, {}, "Tweet unliked successfully"));
     } else {
         await Like.create({ tweet: tweetId, likedBy: req.user._id });
         return res
             .status(200)
-            .json(new ApiResponse(200, "Tweet liked successfully"));
+            .json(new ApiResponse(200, {}, "Tweet liked successfully"));
     }
 });
 

@@ -58,7 +58,6 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User with email or username already exists");
     }
 
-    console.log(req.files)
     const avatarLocalPath = req.files?.avatar?.[0].path;
 
     let coverImageLocalPath;
@@ -81,15 +80,19 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Avatar file is required");
     }
 
+    if (password.length < 8) {
+        throw new ApiError(400, "Password must be at least 8 characters long");
+    }
+
     const user = await User.create({
         fullName,
         username: username.toLowerCase(),
         avatar: {
-            url: avatar.url,
+            url: avatar.secure_url,
             public_id: avatar.public_id,
         },
         coverImage: {
-            url: coverImage?.url,
+            url: coverImage?.secure_url,
             public_id: coverImage?.public_id,
         },
         email,
@@ -102,7 +105,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (!createdUser) {
         await removeFromCloudinary(avatar.public_id);
-        await removeFromCloudinary(coverImage.public_id);
+        if (coverImage?.public_id) {
+            await removeFromCloudinary(coverImage.public_id);
+        }
         throw new ApiError(
             500,
             "Something went wrong while registering the user"
@@ -173,32 +178,28 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-    try {
-        await User.findByIdAndUpdate(
-            req.user._id,
-            {
-                $unset: {
-                    refreshToken: 1,
-                },
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1,
             },
-            {
-                returnDocument: "after",
-            }
-        );
+        },
+        {
+            returnDocument: "after",
+        }
+    );
 
-        const options = {
-            httpOnly: true,
-            secure: true,
-        };
+    const options = {
+        httpOnly: true,
+        secure: true,
+    };
 
-        return res
-            .status(200)
-            .clearCookie("accessToken", options)
-            .clearCookie("refreshToken", options)
-            .json(new ApiResponse(200, {}, "User logged out successfully"));
-    } catch (error) {
-        throw new ApiError(500, error?.message || "Failed to logout");
-    }
+    return res
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -283,8 +284,11 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     const { fullName, email } = req.body;
     console.log(req.body);
 
-    if (!(fullName || email)) {
-        throw new ApiError(400, "All fields are required");
+    if (!(fullName && email)) {
+        throw new ApiError(
+            400,
+            "At least one field (fullName or email) is required"
+        );
     }
 
     const user = await User.findByIdAndUpdate(
@@ -324,7 +328,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         {
             $set: {
                 avatar: {
-                    url: avatar.url,
+                    url: avatar.secure_url,
                     public_id: avatar.public_id,
                 },
             },
@@ -350,7 +354,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
-    if (!coverImage.url) {
+    if (!coverImage || !coverImage.secure_url) {
         throw new ApiError(500, "Error while uploading cover image");
     }
 
@@ -359,7 +363,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         {
             $set: {
                 coverImage: {
-                    url: coverImage.url,
+                    url: coverImage.secure_url,
                     public_id: coverImage.public_id,
                 },
             },
